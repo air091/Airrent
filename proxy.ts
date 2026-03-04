@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyToken } from "@/lib/jwt";
-import Account from "./models/Account";
 
 export async function proxy(request: NextRequest) {
   const token = request.cookies.get("token")?.value;
@@ -15,5 +14,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/api/auth/me"],
+  matcher: ["/api/auth/me", "/api/auth/logout"],
 };
