@@ -3,3 +3,5 @@ export interface RegisterBody {
   email: string;
   password: string;
 }
+
+export type LoginBody = Omit<RegisterBody, "username">;
