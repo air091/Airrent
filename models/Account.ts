@@ -40,6 +40,36 @@ class Account {
     }
   };
 
+  static findById = async (userId: string) => {
+    const selectQuery = `SELECT 
+                            auth.accounts.id,
+                            market.users.profile_url,
+                            market.users.username,
+                            auth.roles.name AS role,
+                            auth.statuses.name AS status,
+                            auth.accounts.created_at,
+                            auth.accounts.updated_at
+                          FROM auth.accounts
+                          INNER JOIN 
+                            market.users ON auth.accounts.user_id = market.users.id
+                          INNER JOIN 
+                            auth.roles ON auth.accounts.role_id = auth.roles.id
+                          INNER JOIN 
+                            auth.statuses ON auth.accounts.status_id = auth.statuses.id
+                          WHERE auth.accounts.id = $1`;
+    const client = await pool.connect();
+
+    try {
+      const results = await client.query(selectQuery, [userId]);
+      return results.rows[0];
+    } catch (error) {
+      console.error("Find account by id failed");
+      throw error;
+    } finally {
+      client.release();
+    }
+  };
+
   static findByEmail = async (email: string) => {
     const selectQuery = `SELECT id, email, password, user_id FROM auth.accounts
                          WHERE email = $1`;

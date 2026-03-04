@@ -36,11 +36,12 @@ export async function POST(request: NextRequest) {
     (await cookies()).set("token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
+      sameSite: true,
       path: "/",
       maxAge: 60 * 1,
     });
 
-    return NextResponse.json({ message: "Login successfully", account, token });
+    return NextResponse.json({ message: "Login successfully" });
   } catch (error: any) {
     console.error(`Login Failed`, error);
     return NextResponse.json({
