@@ -1,12 +1,11 @@
+import { getCurrentUser } from "@/lib/getCurrentUser";
 import Service from "@/models/Service";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: { hostId: string } },
-) {
+export async function POST(request: NextRequest) {
   try {
-    const { hostId } = await params;
+    const user = await getCurrentUser(request);
+    const hostId = user?.id;
     const body = await request.json();
     const { title, image_url, description } = body;
     const statusId = "de6ffded-f6b0-4139-b795-4d1eddb01f5f";
@@ -40,12 +39,10 @@ export async function POST(
   }
 }
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { hostId: string } },
-) {
+export async function GET(request: NextRequest) {
   try {
-    const { hostId } = await params;
+    const user = await getCurrentUser(request);
+    const hostId = user?.id;
     const services = await Service.selectAllByHost(hostId);
     if (!services.length)
       return NextResponse.json({ message: "No services yet" }, { status: 404 });
