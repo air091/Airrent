@@ -8,29 +8,24 @@ class Account {
     roleId: string,
     statusId: string,
   ) => {
-    const insertUserQuery = `INSERT INTO market.users (username)
-                       VALUES ($1) 
-                       RETURNING id`;
-    const insertAccountQuery = `INSERT INTO auth.accounts (email, password, role_id, status_id, user_id)
-                          VALUES ($1, $2, $3, $4, $5) 
-                          RETURNING *`;
+    const insertQuery = `INSERT INTO auth.accounts (username, email, password, role_id, status_id)`;
     const client = await pool.connect();
 
     try {
       await client.query("BEGIN");
 
-      const userResults = await client.query(insertUserQuery, [username]);
-      const userId = userResults.rows[0].id;
-      const accountResults = await client.query(insertAccountQuery, [
+      const userResults = await client.query(insertQuery, [
+        username,
         email,
         password,
         roleId,
         statusId,
-        userId,
       ]);
+      const userId = userResults.rows[0].id;
 
       await client.query("COMMIT");
-      return accountResults.rows[0];
+      const result = await this.findById(userId);
+      return result;
     } catch (error) {
       await client.query("ROLLBACK");
       console.error("Insert User and Account failed");
@@ -42,16 +37,15 @@ class Account {
 
   static findById = async (userId: string) => {
     const selectQuery = `SELECT 
-                            auth.accounts.id,
-                            market.users.profile_url,
-                            market.users.username,
+                            auth.account.id,
+                            auth.account.username,
+                            auth.account.email,
+                            auth.account.image_url AS image,
                             auth.roles.name AS role,
                             auth.statuses.name AS status,
-                            auth.accounts.created_at,
-                            auth.accounts.updated_at
+                            auth.account.created_at,
+                            auth.account.updated_at
                           FROM auth.accounts
-                          INNER JOIN 
-                            market.users ON auth.accounts.user_id = market.users.id
                           INNER JOIN 
                             auth.roles ON auth.accounts.role_id = auth.roles.id
                           INNER JOIN 
