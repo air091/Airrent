@@ -40,9 +40,12 @@ export async function POST(request: NextRequest) {
     );
   } catch (error: any) {
     console.error(`Register failed ${error}`);
-    return NextResponse.json({
-      message: "Register Failed",
-      error_message: error.message,
-    });
+    return NextResponse.json(
+      {
+        message: "Register Failed",
+        error_message: error.message,
+      },
+      { status: 500 },
+    );
   }
 }

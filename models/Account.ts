@@ -8,7 +8,9 @@ class Account {
     roleId: string,
     statusId: string,
   ) => {
-    const insertQuery = `INSERT INTO auth.accounts (username, email, password, role_id, status_id)`;
+    const insertQuery = `INSERT INTO auth.accounts (username, email, password,  role_id, status_id)
+                         VALUES ($1, $2, $3, $4, $5)
+                         RETURNING id`;
     const client = await pool.connect();
 
     try {
@@ -28,7 +30,7 @@ class Account {
       return result;
     } catch (error) {
       await client.query("ROLLBACK");
-      console.error("Insert User and Account failed");
+      console.error("Insert account failed");
       throw error;
     } finally {
       client.release();
@@ -37,14 +39,14 @@ class Account {
 
   static findById = async (userId: string) => {
     const selectQuery = `SELECT 
-                            auth.account.id,
-                            auth.account.username,
-                            auth.account.email,
-                            auth.account.image_url AS image,
+                            auth.accounts.id,
+                            auth.accounts.username,
+                            auth.accounts.email,
+                            auth.accounts.image_url AS image,
                             auth.roles.name AS role,
                             auth.statuses.name AS status,
-                            auth.account.created_at,
-                            auth.account.updated_at
+                            auth.accounts.created_at,
+                            auth.accounts.updated_at
                           FROM auth.accounts
                           INNER JOIN 
                             auth.roles ON auth.accounts.role_id = auth.roles.id
@@ -65,7 +67,7 @@ class Account {
   };
 
   static findByEmail = async (email: string) => {
-    const selectQuery = `SELECT id, email, password, user_id FROM auth.accounts
+    const selectQuery = `SELECT id, email, password FROM auth.accounts
                          WHERE email = $1`;
     const client = await pool.connect();
     try {
