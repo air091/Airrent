@@ -30,10 +30,13 @@ export async function POST(
     });
   } catch (error: any) {
     console.error(`Create service failed`, error);
-    return NextResponse.json({
-      message: "Create service failed",
-      error_message: error.message,
-    });
+    return NextResponse.json(
+      {
+        message: "Create service failed",
+        error_message: error.message,
+      },
+      { status: 500 },
+    );
   }
 }
 
@@ -52,9 +55,12 @@ export async function GET(
     );
   } catch (error: any) {
     console.error(`Show services failed`, error);
-    return NextResponse.json({
-      message: "Show service failed",
-      error_message: error.message,
-    });
+    return NextResponse.json(
+      {
+        message: "Show service failed",
+        error_message: error.message,
+      },
+      { status: 500 },
+    );
   }
 }

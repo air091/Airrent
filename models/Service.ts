@@ -13,23 +13,6 @@ class Service {
                                 RETURNING id`;
     const insertUserServiceQuery = `INSERT INTO market.user_services (service_id, user_id)
                                     VALUES ($1, $2)`;
-    const selectQuery = `SELECT
-                            market.services.id,
-                            market.users.username as host,
-                            market.services.title,
-                            market.services.image_url as image,
-                            market.services.description,
-                            market.service_statuses.name AS status,
-                            market.services.created_at,
-                            market.services.updated_at
-                         FROM market.user_services
-                         INNER JOIN
-                            market.services ON market.user_services.service_id = market.services.id
-                         INNER JOIN
-                            market.users ON market.user_services.user_id = market.users.id
-                         INNER JOIN
-                            market.service_statuses ON market.services.status_id = market.service_statuses.id
-                         WHERE market.user_services.service_id = $1 AND market.user_services.user_id = $2`;
 
     const client = await pool.connect();
     try {
@@ -43,8 +26,8 @@ class Service {
       const serviceId = insertServiceResults.rows[0].id;
       await client.query(insertUserServiceQuery, [serviceId, hostId]);
       await client.query("COMMIT");
-      const result = await client.query(selectQuery, [serviceId, hostId]);
-      return result.rows[0];
+      const result = await this.selectServiceByHost(serviceId, hostId);
+      return result;
     } catch (error) {
       await client.query("ROLLBACK");
       console.error("Service insert failed");
@@ -54,10 +37,38 @@ class Service {
     }
   };
 
+  static selectServiceByHost = async (hostId: string, serviceId: string) => {
+    const selectQuery = `SELECT
+                            market.services.id,
+                            auth.accounts.username AS host,
+                            market.services.title,
+                            market.services.image_url AS image,
+                            market.services.description,
+                            market.services.created_at,
+                            market.services.updated_at
+                         FROM market.user_services
+                         INNER JOIN
+                            market.services ON market.user_services.service_id = market.services.id
+                         INNER JOIN
+                            auth.accounts ON market.user_services.user_id = auth.accounts.id
+                         WHERE market.user_services.service_id = $1
+                            AND market.user_services.user_id = $2`;
+    const client = await pool.connect();
+    try {
+      const result = await client.query(selectQuery, [hostId, serviceId]);
+      return result.rows[0];
+    } catch (error) {
+      console.error("Select service by host failed");
+      throw error;
+    } finally {
+      client.release();
+    }
+  };
+
   static selectAllByHost = async (hostId: string) => {
     const selectQuery = `SELECT 
                             market.services.id,
-                            market.users.username AS host,
+                            auth.accounts.username AS host,
                             market.services.title,
                             market.services.image_url AS image,
                             market.services.description,
@@ -68,7 +79,7 @@ class Service {
                          INNER JOIN
                             market.services ON market.user_services.service_id = market.services.id
                          INNER JOIN 
-                            market.users ON market.user_services.user_id = market.users.id
+                            auth.accounts ON market.user_services.user_id = auth.accounts.id
                          INNER JOIN
                             market.service_statuses ON market.services.status_id = market.service_statuses.id
                          WHERE market.user_services.user_id = $1`;
