@@ -1,4 +1,5 @@
 import pool from "@/lib/db";
+import Plan from "./Plan";
 
 class Service {
   static insert = async (
@@ -56,6 +57,10 @@ class Service {
     const client = await pool.connect();
     try {
       const result = await client.query(selectQuery, [serviceId, hostId]);
+      for (const service of result.rows) {
+        const plans = await Plan.selectPlansInService(service.id);
+        service.plans = plans;
+      }
       return result.rows[0];
     } catch (error) {
       console.error("Select service by host failed");
@@ -86,6 +91,10 @@ class Service {
     const client = await pool.connect();
     try {
       const results = await client.query(selectQuery, [hostId]);
+      for (const service of results.rows) {
+        const plans = await Plan.selectPlansInService(service.id);
+        service.plans = plans;
+      }
       return results.rows;
     } catch (error) {
       console.error("Service select all failed");
@@ -143,6 +152,8 @@ class Service {
     const client = await pool.connect();
     try {
       const isAuthorized = await this.checkServiceAndHost(serviceId, hostId);
+      if (!isAuthorized) throw new Error("Unauthorized");
+
       await client.query("BEGIN");
       const result = await client.query(deleteQuery, [serviceId]);
       await client.query("COMMIT");

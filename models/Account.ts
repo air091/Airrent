@@ -38,7 +38,7 @@ class Account {
   };
 
   static findById = async (userId: string) => {
-    const selectQuery = `SELECT 
+    const selectQuery = `SELECT
                             auth.accounts.id,
                             auth.accounts.username,
                             auth.accounts.email,
@@ -48,9 +48,9 @@ class Account {
                             auth.accounts.created_at,
                             auth.accounts.updated_at
                           FROM auth.accounts
-                          INNER JOIN 
+                          INNER JOIN
                             auth.roles ON auth.accounts.role_id = auth.roles.id
-                          INNER JOIN 
+                          INNER JOIN
                             auth.statuses ON auth.accounts.status_id = auth.statuses.id
                           WHERE auth.accounts.id = $1`;
     const client = await pool.connect();

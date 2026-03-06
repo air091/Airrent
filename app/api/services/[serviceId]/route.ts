@@ -9,6 +9,9 @@ export async function GET(
   try {
     const user = await getCurrentUser(request);
     const hostId = user?.id;
+    if (!hostId)
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+
     const { serviceId } = await params;
     const service = await Service.selectServiceByHost(hostId, serviceId);
 
@@ -19,13 +22,18 @@ export async function GET(
       );
 
     return NextResponse.json(
-      { message: "Service fetched successfully", service },
+      {
+        message: "Service fetched successfully",
+        service,
+      },
       { status: 200 },
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Get service by host failed", error);
+    let errMessage = "Unknown error";
+    if (error instanceof Error) errMessage = error.message;
     return NextResponse.json(
-      { message: "Get service by host failed", error_message: error.message },
+      { message: "Get service by host failed", error_message: errMessage },
       { status: 500 },
     );
   }
@@ -38,6 +46,9 @@ export async function PUT(
   try {
     const user = await getCurrentUser(request);
     const hostId = user?.id;
+    if (!hostId)
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+
     const { serviceId } = await params;
     const body = await request.json();
     const { title, image_url, description } = body;
@@ -58,12 +69,15 @@ export async function PUT(
       { message: "Service updated successfully", service },
       { status: 200 },
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Get service by host failed", error);
+    let errMessage = "Unknown error";
+    if (error instanceof Error) errMessage = error.message;
+
     return NextResponse.json(
       {
         message: "Update service by host failed",
-        error_message: error.message,
+        error_message: errMessage,
       },
       { status: 500 },
     );
@@ -77,6 +91,9 @@ export async function DELETE(
   try {
     const user = await getCurrentUser(request);
     const hostId = user?.id;
+    if (!hostId)
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+
     const { serviceId } = await params;
 
     const service = await Service.deleteService(serviceId, hostId);
@@ -87,10 +104,13 @@ export async function DELETE(
       );
 
     return NextResponse.json({ message: "Service deleted successfully" });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Service delete failed", error);
+    let errMessage = "Unknown error";
+    if (error instanceof Error) errMessage = error.message;
+
     return NextResponse.json(
-      { message: "Service delete failed", error_message: error.message },
+      { message: "Service delete failed", error_message: errMessage },
       { status: 500 },
     );
   }
