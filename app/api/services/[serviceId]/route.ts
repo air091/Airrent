@@ -50,14 +50,16 @@ export async function PUT(
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
 
     const { serviceId } = await params;
-    const body = await request.json();
-    const { title, image_url, description } = body;
+    const isOwner = await Service.checkServiceAndHost(serviceId, user.id);
+    if (!isOwner)
+      return NextResponse.json({ message: "Forbidden" }, { status: 403 });
 
-    const service = await Service.updateService(
-      { title, image_url, description },
-      serviceId,
-      hostId,
-    );
+    const body = await request.json();
+    const payload: Record<string, unknown> = {};
+    if (body.title !== undefined) payload.title = body.title;
+    if (body.image_url !== undefined) payload.image_url = body.image_url;
+    if (body.description !== undefined) payload.description = body.description;
+    const service = await Service.updateService(payload, serviceId, hostId);
 
     if (!service)
       return NextResponse.json(
@@ -70,7 +72,7 @@ export async function PUT(
       { status: 200 },
     );
   } catch (error: unknown) {
-    console.error("Get service by host failed", error);
+    console.error("Update service by host failed", error);
     let errMessage = "Unknown error";
     if (error instanceof Error) errMessage = error.message;
 

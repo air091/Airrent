@@ -1,5 +1,6 @@
 import { getCurrentUser } from "@/lib/getCurrentUser";
 import Plan from "@/models/Plan";
+import Service from "@/models/Service";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(
@@ -12,6 +13,11 @@ export async function POST(
       return NextResponse.json({ message: "Unauthorzed" }, { status: 401 });
 
     const { serviceId } = await params;
+
+    const isOwner = await Service.checkServiceAndHost(serviceId, user.id);
+    if (!isOwner)
+      return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+
     const body = await request.json();
     const { name, price, description } = body;
 

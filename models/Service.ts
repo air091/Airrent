@@ -126,17 +126,14 @@ class Service {
     const updateQuery = `UPDATE market.services
                          SET ${fields}
                          WHERE id = $${values.length + 1}`;
+    console.log(updateQuery);
     const client = await pool.connect();
     try {
-      const isAuthorized = await this.checkServiceAndHost(serviceId, hostId);
-      console.log(updateQuery);
-      if (!isAuthorized) throw new Error("Unauthorized");
-
       await client.query("BEGIN");
       await client.query(updateQuery, [...values, serviceId]);
       await client.query("COMMIT");
       const result = await this.selectServiceByHost(hostId, serviceId);
-      return result.rows[0];
+      return result;
     } catch (error) {
       await client.query("ROLLBACK");
       console.error("Update service failed");
@@ -151,9 +148,6 @@ class Service {
                          WHERE id = $1`;
     const client = await pool.connect();
     try {
-      const isAuthorized = await this.checkServiceAndHost(serviceId, hostId);
-      if (!isAuthorized) throw new Error("Unauthorized");
-
       await client.query("BEGIN");
       const result = await client.query(deleteQuery, [serviceId]);
       await client.query("COMMIT");

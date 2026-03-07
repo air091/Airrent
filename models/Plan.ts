@@ -55,6 +55,53 @@ class Plan {
       client.release();
     }
   };
+
+  static updatePlanInService = async (payload: object, planId: string) => {
+    const fields = Object.keys(payload)
+      .map((key, index) => `${key} = $${index + 1}`)
+      .join(", ");
+
+    const values = Object.values(payload);
+
+    const updateQuery = `UPDATE market.plans
+                       SET ${fields}
+                       WHERE id = $${values.length + 1}`;
+
+    const client = await pool.connect();
+
+    try {
+      await client.query("BEGIN");
+
+      const result = await client.query(updateQuery, [...values, planId]);
+
+      await client.query("COMMIT");
+      return result.rowCount;
+    } catch (error) {
+      await client.query("ROLLBACK");
+      console.error("Update plan in service failed");
+      throw error;
+    } finally {
+      client.release();
+    }
+  };
+
+  static deletePlan = async (planId: string) => {
+    const deleteQuery = `DELETE FROM market.plans
+                         WHERE id = $1`;
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+      const result = await client.query(deleteQuery, [planId]);
+      await client.query("COMMIT");
+      return result.rowCount;
+    } catch (error) {
+      await client.query("ROLLBACK");
+      console.error("Delete plan failed");
+      throw error;
+    } finally {
+      client.release();
+    }
+  };
 }
 
 export default Plan;
